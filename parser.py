@@ -2,7 +2,7 @@ from s_lexer import lexer, tokens
 from tablasGramaticas import (
     operationTable, SOpe, ZOpe, AOpe, BOpe, COpe, DOpe,
     SIfElse, AIfElse, BIfElse, CIfElse, ifElseTable,
-    SWhile, whileTable,
+    SWhile, SFor, AFor, BFor, CFor, DFor, whileTable, forTable,
     SVar, AVar, BVar, CVar, DVar, EVar, FVar, GVar, HVar, IVar, JVar, STipos, varFuncTable,
 )
 # Definir SAll y asignar un número único
@@ -10,8 +10,10 @@ SAll = 100
 
 # Crear la tabla para SAll
 allTable = [
-    [SAll, 'BUCLE_MIENTRAS', [SWhile]],
-    [SAll, 'CONDICIONAL', [SIfElse]],
+    [SAll, 'BUCLE_MIENTRAS', [SWhile]],  # While
+    [SAll, 'CICLO', [SFor]],            # For
+    [SAll, 'CONDICIONAL', [SIfElse]],   # If-Else
+    # Variables y funciones
     [SAll, 'TIPO_ENTERO', [SVar]],
     [SAll, 'TIPO_CADENA', [SVar]],
     [SAll, 'TIPO_LARGO', [SVar]],
@@ -20,9 +22,8 @@ allTable = [
     [SAll, 'TIPO_FLOTANTE', [SVar]],
     [SAll, 'TIPO_DOUBLE', [SVar]],
     [SAll, 'IDENTIFICADOR', [SVar]],
-    # Agregar más producciones según sea necesario
+    # Más producciones si son necesarias
 ]
-
 class Parser:
     def __init__(self, lexer, tokens, parsing_tables, start_symbol):
         self.lexer = lexer
@@ -35,36 +36,43 @@ class Parser:
 
         # Mapeo de no terminales a sus tablas de parsing
         self.non_terminal_table_mapping = {
-            # Operaciones aritméticas
-            SOpe: operationTable,
-            ZOpe: operationTable,
-            AOpe: operationTable,
-            BOpe: operationTable,
-            COpe: operationTable,
-            DOpe: operationTable,
-            # if-else
-            SIfElse: ifElseTable,
-            AIfElse: ifElseTable,
-            BIfElse: ifElseTable,
-            CIfElse: ifElseTable,
-            # Variables y funciones
-            SVar: varFuncTable,
-            AVar: varFuncTable,
-            BVar: varFuncTable,
-            CVar: varFuncTable,
-            DVar: varFuncTable,
-            EVar: varFuncTable,
-            FVar: varFuncTable,
-            GVar: varFuncTable,
-            HVar: varFuncTable,
-            IVar: varFuncTable,
-            JVar: varFuncTable,
-            STipos: varFuncTable,
-            # Bucle while
-            SWhile: whileTable,
-            # Símbolo inicial general
-            SAll: allTable,
-        }
+    # Operaciones aritméticas
+    SOpe: operationTable,
+    ZOpe: operationTable,
+    AOpe: operationTable,
+    BOpe: operationTable,
+    COpe: operationTable,
+    DOpe: operationTable,
+    # if-else
+    SIfElse: ifElseTable,
+    AIfElse: ifElseTable,
+    BIfElse: ifElseTable,
+    CIfElse: ifElseTable,
+    # Variables y funciones
+    SVar: varFuncTable,
+    AVar: varFuncTable,
+    BVar: varFuncTable,
+    CVar: varFuncTable,
+    DVar: varFuncTable,
+    EVar: varFuncTable,
+    FVar: varFuncTable,
+    GVar: varFuncTable,
+    HVar: varFuncTable,
+    IVar: varFuncTable,
+    JVar: varFuncTable,
+    STipos: varFuncTable,
+    # Bucle while
+    SWhile: whileTable,
+    # Bucle for
+    SFor: forTable,  # Aquí está el soporte para el bucle for
+    AFor: forTable,
+    BFor: forTable,
+    CFor: forTable,
+    DFor: forTable,
+    # Símbolo inicial general
+    SAll: allTable,
+}
+       
 
     def parse(self, input_string):
         self.lexer.input(input_string)
@@ -105,6 +113,7 @@ class Parser:
             else:
                 # Es un no terminal
                 production = self.buscar_en_tabla(self.x, self.tok.type)
+                print(f"Produccion {production}")
                 if production is None:
                     print(f"Error: No se esperaba '{self.tok.type}' después de '{self.x}' en la posición {self.tok.lexpos}")
                     return False
@@ -120,6 +129,7 @@ class Parser:
 
     def buscar_en_tabla(self, no_terminal, terminal):
         # Obtener la tabla de parsing correspondiente al no terminal
+        print(f"Buscando producciones para {no_terminal} y {terminal}")
         tabla = self.non_terminal_table_mapping.get(no_terminal)
         if tabla is None:
             return None
@@ -147,7 +157,7 @@ def main():
     parser = Parser(lexer, tokens, parsing_tables, start_symbol)
 
     # Leer el archivo de entrada
-    with open('./source/ExampleC.c', 'r') as f:
+    with open('./source/ExampleCError.c', 'r') as f:
         input_string = f.read()
 
     # Ejecutar el parser

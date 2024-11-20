@@ -43,7 +43,10 @@ SDoWhile = 26
 
 #Gramtica for
 SFor = 27
-
+AFor = 28
+BFor = 29
+CFor = 30
+DFor = 31
 SAll = 28
 
 
@@ -119,6 +122,7 @@ operationTable = [
     [BOpe,'OR_LOGICO_CONDICIONAL',['OR_LOGICO_CONDICIONAL',COpe,BOpe]],
     [BOpe,'PAREN_IZQ',None],
     [BOpe,'PAREN_DER',empty],
+    [BOpe,'PUNTO_COMA',['PUNTO_COMA']],#nuevo
     [BOpe,'IDENTIFICADOR',None],
     [BOpe,'NUMERO_DECIMAL',None],
     [BOpe,'NUMERO_ENTERO',None],
@@ -173,6 +177,11 @@ ifElseTable = [
     [SIfElse, 'LLAVE_IZQ', None],
     [SIfElse, 'LLAVE_DER', None],
     [SIfElse, 'CASO_CONTRARIO', None],
+    [SIfElse, 'TIPO_ENTERO', ['TIPO_ENTERO', SIfElse]],
+    [SIfElse, 'IDENTIFICADOR', ['IDENTIFICADOR', SIfElse]],
+    [SIfElse, 'ASIGNAR', ['ASIGNAR', SIfElse]],
+    [SIfElse, 'NUMERO_ENTERO', ['NUMERO_ENTERO', SIfElse]],
+    [SIfElse, 'PUNTO_COMA', ['PUNTO_COMA', SFor]],
     #AIfElse
     [AIfElse, 'eof', None],
     [AIfElse, 'CONDICIONAL', None],
@@ -252,6 +261,7 @@ varFuncTable = [
     [BVar,'TIPO_FLOTANTE',None],
     [BVar,'TIPO_DOUBLE',None],
     [BVar,'PAREN_IZQ',None],
+    [BVar,'NUMERO_ENTERO',['NUMERO_ENTERO',BOpe]],
     #CVar
     [CVar,'eof',None],
     [CVar,'IDENTIFICADOR',None],
@@ -321,6 +331,7 @@ varFuncTable = [
     [FVar,'TIPO_FLOTANTE',None],
     [FVar,'TIPO_DOUBLE',None],
     [FVar,'PAREN_IZQ',['PAREN_IZQ',GVar]],
+    
     #GVar 
     [GVar,'eof', None],
     [GVar,'IDENTIFICADOR', None],
@@ -416,4 +427,33 @@ whileTable = [
     [SWhile, 'PAREN_DER', None],
     [SWhile, 'LLAVE_IZQ', None],
     [SWhile, 'LLAVE_DER', None]
+]
+
+forTable = [
+    # SFor
+    [SFor, 'eof', None],
+    [SFor, 'CICLO', ['CICLO', 'PAREN_IZQ', AFor, 'PAREN_DER', 'LLAVE_IZQ', SIfElse, 'LLAVE_DER']], # SIfElse se usará para el cuerpo
+
+    # AFor (Inicialización; Condición; Incremento/Decremento)
+    [AFor, 'eof', None],
+    [AFor, 'TIPO_ENTERO', ['TIPO_ENTERO', 'IDENTIFICADOR', 'ASIGNAR', SOpe, 'PUNTO_COMA', BFor]],
+    [AFor, 'TIPO_CADENA', ['TIPO_CADENA', 'IDENTIFICADOR', 'ASIGNAR', SOpe, 'PUNTO_COMA', BFor]],
+
+    # BFor (Condición)
+    [BFor, 'eof', None],
+    [BFor, 'IDENTIFICADOR', [SOpe, 'PUNTO_COMA', CFor]],
+    [BFor, 'NUMERO_ENTERO', [SOpe, 'PUNTO_COMA', CFor]],
+    [BFor, 'NUMERO_DECIMAL', [SOpe, 'PUNTO_COMA', CFor]],
+
+    # CFor (Incremento/Decremento)
+    [CFor, 'eof', None],
+    [CFor, 'IDENTIFICADOR', ['IDENTIFICADOR', DFor]],
+    [CFor, 'INCREMENTO', ['INCREMENTO']],
+    [CFor, 'DECREMENTO', ['DECREMENTO']],
+
+    # DFor (Opciones después del identificador)
+    [DFor, 'eof', None],
+    [DFor, 'INCREMENTO', ['INCREMENTO']],
+    [DFor, 'DECREMENTO', ['DECREMENTO']],
+    [DFor, 'PUNTO_COMA', empty],
 ]

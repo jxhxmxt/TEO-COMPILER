@@ -30,7 +30,7 @@ tokens = (
   #palabras reservadas
   'ESTATICO',
   'CONDICIONAL',
-  'BUCLE_PARA',
+  'CICLO',
   'BUCLE_MIENTRAS',
   'HACER',
   'RETORNAR',
@@ -85,7 +85,7 @@ reservadas = {
   'double': 'TIPO_DOUBLE',
   'static': 'ESTATICO',
   'if': 'CONDICIONAL',
-  'for': 'BUCLE_PARA',
+  'for': 'CICLO',
   'while': 'BUCLE_MIENTRAS',
   'do': 'HACER',
   'return': 'RETORNAR',
