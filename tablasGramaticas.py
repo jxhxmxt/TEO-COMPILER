@@ -70,6 +70,10 @@ operationTable = [
     [SOpe,'NUMERO_ENTERO',[AOpe,ZOpe]],
     [SOpe,'CORCHETE_IZQ',None],
     [SOpe,'CORCHETE_DER',None],
+    [SOpe,'LLAVE_DER',['LLAVE_DER']],
+
+   
+    
     #ZOpe
     [ZOpe,'eof',empty],
     [ZOpe,'SUMAR',['SUMAR',AOpe,ZOpe]],
@@ -89,6 +93,13 @@ operationTable = [
     [ZOpe,'NUMERO_ENTERO',None],
     [ZOpe,'CORCHETE_IZQ',None],
     [ZOpe,'CORCHETE_DER',None],
+    [ZOpe, 'IDENTIFICADOR', ['IDENTIFICADOR', AOpe]],
+    [ZOpe, 'LLAVE_DER', ['LLAVE_DER', ZOpe]],
+    [ZOpe,'TIPO_ENTERO',['TIPO_ENTERO', EVar]],
+    [ZOpe,'CASO_CONTRARIO',['CASO_CONTRARIO',CIfElse]],
+    [ZOpe,'CICLO',['CICLO', 'PAREN_IZQ', AFor, 'PAREN_DER', 'LLAVE_IZQ', SFor, 'LLAVE_DER']],
+    [ZOpe, 'TIPO_CARACTER', ['TIPO_CARACTER', EVar]],
+
     #AOpe
     [AOpe,'eof',None],
     [AOpe,'SUMAR',None],
@@ -128,6 +139,10 @@ operationTable = [
     [BOpe,'NUMERO_ENTERO',None],
     [BOpe,'CORCHETE_IZQ',None],
     [BOpe,'CORCHETE_DER',None],
+    [BOpe,'TIPO_ENTERO',['TIPO_ENTERO',AOpe]],
+    
+    [BOpe,'LLAVE_DER',['LLAVE_DER']],
+    [BOpe,'CONDICIONAL',['CONDICIONAL', 'PAREN_IZQ',SOpe,'PAREN_DER', 'LLAVE_IZQ', AIfElse]],
     #COpe
     [COpe,'eof',None],
     [COpe,'SUMAR',None],
@@ -165,7 +180,10 @@ operationTable = [
     [DOpe,'NUMERO_DECIMAL',None],
     [DOpe,'NUMERO_ENTERO',None],
     [DOpe,'CORCHETE_IZQ',['CORCHETE_IZQ','NUMERO_ENTERO','CORCHETE_DER']],
-    [DOpe,'CORCHETE_DER',None]
+    [DOpe,'CORCHETE_DER',None],
+    [DOpe,'ASIGNAR',['ASIGNAR', SIfElse]],
+
+    [DOpe,'PUNTO_COMA',['PUNTO_COMA']],
 ]
 
 ifElseTable = [
@@ -181,7 +199,11 @@ ifElseTable = [
     [SIfElse, 'IDENTIFICADOR', ['IDENTIFICADOR', SIfElse]],
     [SIfElse, 'ASIGNAR', ['ASIGNAR', SIfElse]],
     [SIfElse, 'NUMERO_ENTERO', ['NUMERO_ENTERO', SIfElse]],
-    [SIfElse, 'PUNTO_COMA', ['PUNTO_COMA', SFor]],
+    [SIfElse, 'PUNTO_COMA', ['PUNTO_COMA', SVar]],
+    [SIfElse, 'RESTAR',['RESTAR',AOpe,ZOpe]],
+    [SIfElse, 'MULTIPLICAR',['MULTIPLICAR',AOpe,ZOpe]],
+    
+    [SIfElse, 'RETORNAR', ['RETORNAR', SOpe]],
     #AIfElse
     [AIfElse, 'eof', None],
     [AIfElse, 'CONDICIONAL', None],
@@ -190,6 +212,7 @@ ifElseTable = [
     [AIfElse, 'LLAVE_IZQ', None],
     [AIfElse, 'LLAVE_DER', ['LLAVE_DER', BIfElse]], 
     [AIfElse, 'CASO_CONTRARIO', None],
+    [AIfElse, 'IDENTIFICADOR', ['IDENTIFICADOR']],
     #BIfElse
     [BIfElse, 'eof', empty],
     [BIfElse, 'CONDICIONAL', None],
@@ -231,6 +254,7 @@ varFuncTable = [
     [AVar,'eof',None],
     [AVar,'IDENTIFICADOR',None],
     [AVar,'ASIGNAR',['ASIGNAR',BVar]],
+    [AVar,'SUMAR',['SUMAR',AOpe,ZOpe]],
     [AVar,'COMA',['COMA','IDENTIFICADOR',AVar]],
     [AVar,'PUNTO_COMA',['PUNTO_COMA']],
     [AVar,'PAREN_DER',None],
@@ -249,7 +273,7 @@ varFuncTable = [
     [BVar,'IDENTIFICADOR',['IDENTIFICADOR',AVar]],
     [BVar,'ASIGNAR',None],
     [BVar,'COMA',[CVar]],
-    [BVar,'PUNTO_COMA',[CVar]],
+    [BVar,'PUNTO_COMA',['PUNTO_COMA',CVar]],
     [BVar,'PAREN_DER',None],
     [BVar,'LLAVE_IZQ',None],
     [BVar,'LLAVE_DER',None],
@@ -262,6 +286,8 @@ varFuncTable = [
     [BVar,'TIPO_DOUBLE',None],
     [BVar,'PAREN_IZQ',None],
     [BVar,'NUMERO_ENTERO',['NUMERO_ENTERO',BOpe]],
+    [BVar,'NUMERO_DECIMAL',['NUMERO_DECIMAL',SIfElse]],
+    [BVar,'CARACTER',['CARACTER',SIfElse]],
     #CVar
     [CVar,'eof',None],
     [CVar,'IDENTIFICADOR',None],
@@ -279,6 +305,7 @@ varFuncTable = [
     [CVar,'TIPO_FLOTANTE',None],
     [CVar,'TIPO_DOUBLE',None],
     [CVar,'PAREN_IZQ',None],
+    [CVar,'RETORNAR',['RETORNAR',DVar]],
 
     #DVar
     [DVar,'eof', None],
@@ -297,15 +324,16 @@ varFuncTable = [
     [DVar,'TIPO_FLOTANTE',None],
     [DVar,'TIPO_DOUBLE',None],
     [DVar,'PAREN_IZQ',None],
+    [DVar,'NUMERO_ENTERO',['NUMERO_ENTERO', 'PUNTO_COMA', EVar]],
     #EVar
     [EVar,'eof', None],
-    [EVar,'IDENTIFICADOR', ['IDENTIFICADOR', DVar]],
-    [EVar,'ASIGNAR',None],
+    [EVar,'IDENTIFICADOR', ['IDENTIFICADOR', FVar]],
+    [EVar,'ASIGNAR',['ASIGNAR', FVar]],
     [EVar,'COMA',None],
     [EVar,'PUNTO_COMA',['PUNTO_COMA']],
     [EVar,'PAREN_DER',None],
     [EVar,'LLAVE_IZQ',None],
-    [EVar,'LLAVE_DER',None],
+    [EVar,'LLAVE_DER',['LLAVE_DER']],
     [EVar,'TIPO_ENTERO',None],
     [EVar,'TIPO_CADENA',None],
     [EVar,'TIPO_LARGO',None],
@@ -314,6 +342,7 @@ varFuncTable = [
     [EVar,'TIPO_FLOTANTE',None],
     [EVar,'TIPO_DOUBLE',None],
     [EVar,'PAREN_IZQ',None],
+    
     #FVar 
     [FVar,'eof', None],
     [FVar,'IDENTIFICADOR', None],
@@ -324,13 +353,14 @@ varFuncTable = [
     [FVar,'LLAVE_IZQ',None],
     [FVar,'LLAVE_DER',None],
     [FVar,'TIPO_ENTERO',None],
-    [FVar,'TIPO_CADENA',None],
+    [FVar,'CADENA',['CADENA', BVar]],
     [FVar,'TIPO_LARGO',None],
     [FVar,'TIPO_VACIO',None],
     [FVar,'TIPO_CARACTER',None],
     [FVar,'TIPO_FLOTANTE',None],
     [FVar,'TIPO_DOUBLE',None],
     [FVar,'PAREN_IZQ',['PAREN_IZQ',GVar]],
+    [FVar,'CORCHETE_IZQ',['CORCHETE_IZQ','NUMERO_ENTERO', 'CORCHETE_DER', EVar]],
     
     #GVar 
     [GVar,'eof', None],
@@ -432,16 +462,23 @@ whileTable = [
 forTable = [
     # SFor
     [SFor, 'eof', None],
-    [SFor, 'CICLO', ['CICLO', 'PAREN_IZQ', AFor, 'PAREN_DER', 'LLAVE_IZQ', SIfElse, 'LLAVE_DER']], # SIfElse se usará para el cuerpo
+    [SFor, 'CICLO', ['CICLO', 'PAREN_IZQ', AFor, 'PAREN_DER', 'LLAVE_IZQ', SFor, 'LLAVE_DER']], # SIfElse se usará para el cuerpo.
+    [SFor, 'LLAVE_DER', ['LLAVE_DER',ZOpe]],
+
 
     # AFor (Inicialización; Condición; Incremento/Decremento)
     [AFor, 'eof', None],
-    [AFor, 'TIPO_ENTERO', ['TIPO_ENTERO', 'IDENTIFICADOR', 'ASIGNAR', SOpe, 'PUNTO_COMA', BFor]],
-    [AFor, 'TIPO_CADENA', ['TIPO_CADENA', 'IDENTIFICADOR', 'ASIGNAR', SOpe, 'PUNTO_COMA', BFor]],
+    [AFor, 'TIPO_ENTERO', ['TIPO_ENTERO', 'IDENTIFICADOR', 'ASIGNAR', AFor, 'PUNTO_COMA', BFor]],
+    [AFor, 'TIPO_CADENA', ['TIPO_CADENA', 'IDENTIFICADOR', 'ASIGNAR', AFor, 'PUNTO_COMA', BFor]],
+    [AFor, 'NUMERO_ENTERO', ['NUMERO_ENTERO']],
+    [AFor, 'IDENTIFICADOR', ['IDENTIFICADOR', AFor]],
+    [AFor, 'MENOR_QUE', ['MENOR_QUE', AFor]],
+    [AFor, 'MAYOR_QUE', ['MAYOR_QUE', 'IDENTIFICADOR']],
+
 
     # BFor (Condición)
     [BFor, 'eof', None],
-    [BFor, 'IDENTIFICADOR', [SOpe, 'PUNTO_COMA', CFor]],
+    [BFor, 'IDENTIFICADOR', [AFor, 'PUNTO_COMA', CFor]],
     [BFor, 'NUMERO_ENTERO', [SOpe, 'PUNTO_COMA', CFor]],
     [BFor, 'NUMERO_DECIMAL', [SOpe, 'PUNTO_COMA', CFor]],
 
