@@ -204,13 +204,16 @@ varFuncTable = [
     #SVar
     [SVar,'eof',None],
     [SVar,'IDENTIFICADOR',['IDENTIFICADOR',DVar]],
+    [SVar,'IDENTIFICADOR',['IDENTIFICADOR','ASIGNAR','EXPRESION','PUNTO_COMA']],  # Asignación simple a un identificador
     [SVar,'ASIGNAR',None],
     [SVar,'COMA',None],
     [SVar,'PUNTO_COMA',None],
     [SVar,'PAREN_DER',None],
     [SVar,'LLAVE_IZQ',None],
     [SVar,'LLAVE_DER',None],
+    [SVar,'LLAVE_IZQ',['NUMERO_ENTERO', SVar]],
     [SVar,'TIPO_ENTERO',[STipos,'IDENTIFICADOR',FVar]],
+    [SVar,'TIPO_ENTERO',[STipos,'IDENTIFICADOR','ASIGNAR','EXPRESION','PUNTO_COMA']],  # Permitir asignación dentro de bloques
     [SVar,'TIPO_CADENA',[STipos,'IDENTIFICADOR',FVar]],
     [SVar,'TIPO_LARGO',[STipos,'IDENTIFICADOR',FVar]],
     [SVar,'TIPO_VACIO',[STipos,'IDENTIFICADOR',FVar]],
@@ -379,6 +382,7 @@ varFuncTable = [
     [JVar,'COMA',None],
     [JVar,'PUNTO_COMA',['PUNTO_COMA']],
     [JVar,'PAREN_DER',None],
+    [JVar,'LLAVE_IZQ',['LLAVE_IZQ','TIPO_ENTERO','IDENTIFICADOR','ASIGNAR','NUMERO_ENTERO','PUNTO_COMA',SWhile]],
     [JVar,'LLAVE_IZQ',['LLAVE_IZQ', SIfElse ,'LLAVE_DER']], #Agregar SInst antes de LLAVE_DER
     [JVar,'LLAVE_DER',None],
     [JVar,'TIPO_ENTERO',None],

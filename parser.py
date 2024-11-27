@@ -24,10 +24,9 @@ allTable = [
 ]
 
 class Parser:
-    def __init__(self, lexer, tokens, parsing_tables, start_symbol):
+    def __init__(self, lexer, tokens, start_symbol):
         self.lexer = lexer
         self.tokens = tokens
-        self.parsing_tables = parsing_tables
         self.start_symbol = start_symbol
         self.stack = ['eof', self.start_symbol]
         self.tok = None
@@ -135,19 +134,15 @@ class Parser:
                 self.stack.append(elemento)
 
 def main():
-    # Definir las tablas de parsing en un diccionario
-    parsing_tables = {
-        # Este diccionario ya no es necesario porque usamos non_terminal_table_mapping
-    }
 
     # Símbolo inicial
     start_symbol = SAll  # Usar SAll como símbolo inicial general
 
     # Crear instancia del parser
-    parser = Parser(lexer, tokens, parsing_tables, start_symbol)
+    parser = Parser(lexer, tokens, start_symbol)
 
     # Leer el archivo de entrada
-    with open('./source/ExampleC.c', 'r') as f:
+    with open('./source/ExampleCError.c', 'r') as f:
         input_string = f.read()
 
     # Ejecutar el parser
