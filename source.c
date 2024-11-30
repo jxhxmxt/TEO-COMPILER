@@ -1,13 +1,13 @@
 int main() {
-    int var = 2 / 0 ; 
+    int var = 0 ; 
     if ( var ) {
     char b = '2';
-    int a = 2 ;
+    int a = 2 / var ;
      } else { 
 
      }
 
-    while ( a ) {
+    while ( z ) {
         float inside = 54754.21;
     }
     int d = 3 ;
