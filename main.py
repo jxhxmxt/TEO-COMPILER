@@ -5,7 +5,7 @@ import non_terminals as nonTerminals
 import terminals
 from enum import Enum
 
-# general definitions section
+# Definición de los no terminales y terminales
 nt = nonTerminals.NonTerminals
 t = terminals.Terminals
 c_lexer = lexer.lexer
@@ -51,6 +51,28 @@ tree_node_generators = [
     [nt.DECLARATION_BODY.value, t.EQUALS.value],
 ]
 
+non_terminal_node_types = {
+    nt.PROGRAM.value: NodeType.PROGRAM,
+    nt.FUNCTION.value: NodeType.FUNCTION,
+    nt.FUNC_BODY.value: NodeType.CODE_BLOCK,
+    nt.DECLARATION.value: NodeType.VARIABLE,
+    nt.DECLARATION_BODY.value: NodeType.VARIABLE,
+    nt.STATEMENT.value: NodeType.CODE_BLOCK,
+    nt.EXPRESSION.value: NodeType.CODE_BLOCK,
+    nt.EXPRESSION_ALT.value: NodeType.CODE_BLOCK,
+    nt.TERM.value: NodeType.CODE_BLOCK,
+    nt.TERM_ALT.value: NodeType.CODE_BLOCK,
+    nt.FACTOR.value: NodeType.CODE_BLOCK,
+    nt.CONDITIONAL.value: NodeType.CONDITIONAL,
+    nt.CONDITIONAL_ALT.value: NodeType.CONDITIONAL,
+    nt.ASSIGNMENT.value: NodeType.ASSIGNMENT_OPERATOR,
+    nt.DATA_TYPE.value: NodeType.DATA_TYPE,
+    nt.COMMENT.value: NodeType.COMMENT,
+    nt.MACRO.value: NodeType.MACROS,
+    nt.COMPOUND_STATEMENT.value: NodeType.CODE_BLOCK,
+    nt.WHILE_STATEMENT.value: NodeType.LOOP,
+}
+
 def get_node_type(token):
     if token in data_types:
         return NodeType.DATA_TYPE
@@ -80,6 +102,8 @@ def get_node_type(token):
         return NodeType.LITERALS
     if token in conditional:
         return NodeType.CONDITIONAL
+    if token in non_terminal_node_types:
+        return non_terminal_node_types[token]
     return NodeType.CODE_BLOCK
 
 class SyntaxTreeNode:
@@ -111,7 +135,7 @@ def should_ignore_token(stack_element, token):
         return True
     return False
 
-# initial state for stack and grammar rules for parser
+# estado inicial de la pila y la pila de árboles
 stack = [t.EOF.value, nt.PROGRAM.value]
 rules = grammar_rules.derivations
 tree_stack = []
@@ -120,7 +144,7 @@ def read_file():
     f = open('source.c','r')
     f.seek(0)
         
-    # Adding end of file character at the end of the C language code
+    # Carga el código fuente en el lexer y agrega un token de fin de archivo.
     c_lexer.input(f.read() + '$')
 
 def tlpParser():
@@ -128,75 +152,90 @@ def tlpParser():
     not_found_terminals = []
 
     read_file()
-    # Get the next token detected by the lexer
+
+    # Obten el primer token generado por el lexer
     token=c_lexer.token()
     
-    # Retrieve the last element from the stack to operate with
+    # Toma el último elemento de la pila (el tope) como elemento actual para operar.
     stack_element=stack[-1] 
     
-    # Recursive algorithm for parser
+    # Bucle principal del parser.
     while True:
-        # If the token for the end of the code has been reached
+        # Caso: Token final detectado y coincide con el elemento de la pila.
         if stack_element == token.type and stack_element == t.EOF.value:
             if (len(errors) == 0):
                 print("C language code loaded successfully!")
             return
-        else:
-            # We got a terminal token and matches the stack element
-            if stack_element in tokens and stack_element == token.type and stack_element != t.EOF.value:
+        
+        # Caso: El token actual es un terminal y coincide con el tope de la pila.
+        elif stack_element in tokens and stack_element == token.type and stack_element != t.EOF.value:
+            print(f"Stak element: {stack_element} - Token: {token.type}")
+            # Crea un nodo de árbol para este token y lo almacena.
+            node = SyntaxTreeNode(get_node_type(token.type), token.value)
+            tree_stack.append(node)
+            
+            # Elimina el elemento de la pila y avanza al siguiente token.
+            stack.pop()
+            stack_element=stack[-1]
+            token=c_lexer.token()
+
+            # Resetea errores y terminales no encontrados.
+            not_found_terminals = []
+            in_error = False
+        
+        # Caso: El token actual es un terminal, pero no coincide con el tope de la pila.             
+        elif stack_element in tokens and stack_element != token.type:
+            # Crea un nodo para el token y lo almacena.
+            node = SyntaxTreeNode(get_node_type(token.type), token.value)
+            tree_stack.append(node)
+            
+            # Avanza al siguiente token del lexer.
+            token=c_lexer.token()
+            
+            # Si el token actual no está en la pila y no se han encontrado más de dos terminales, almacena el token actual.
+            if token.type in tokens and len(not_found_terminals) <= 2:
+                not_found_terminals.append(token.type)
+            elif in_error == False:                    
+                in_error = True
+                if stack_element is not t.EOF.value:
+                    message = f"Error: token {stack_element} in line {token.lineno} at POSITION {token.lexpos} was expected."
+                    errors.append(message)
+            continue
+        
+        # Caso: El elemento actual de la pila no es un terminal y no está en la lista de tokens.
+        elif stack_element not in tokens:
+            # Verifica si debe ignorar el token según reglas específicas.
+            if should_ignore_token(stack_element, token.type):
                 node = SyntaxTreeNode(get_node_type(token.type), token.value)
                 tree_stack.append(node)
-                
-                stack.pop()
-                stack_element=stack[-1]
                 token=c_lexer.token()
+            
+            # Busca una regla gramatical para derivar el no terminal actual.
+            grammar_production=get_derivation(stack_element, token.type)                            
+            if  grammar_production is None:
+                # Si no se encuentra una regla válida, registra un error y termina.
+                message = f"Error: token {token.type} in line {token.lineno} at POSITION {token.lexpos} was NOT expected." 
+                errors.append(message)
+                print("Grammar rule is not defined for this action. Aborting...")
+                return 0
+            else:
+                # Si la regla es válida, crea un nodo en el árbol para el no terminal.
+                if could_generate_tree_node(stack_element, token.type):
+                    node = SyntaxTreeNode(get_node_type(stack_element), None)
+                    for _ in grammar_production:
+                        if len(tree_stack) > 0:
+                            child = tree_stack.pop()
+                            node.add_child(child)
+                    tree_stack.append(node)
+
+                # Actualiza la pila con los nuevos elementos de la producción.                     
+                stack.pop()
+                append_stack(grammar_production)
+                stack_element=stack[-1]
+                
+                # Resetea errores y terminales no encontrados.
                 not_found_terminals = []
                 in_error = False
-            # We got a terminal token but is not the same for the stack element             
-            if stack_element in tokens and stack_element != token.type:
-                node = SyntaxTreeNode(get_node_type(token.type), token.value)
-                tree_stack.append(node)
-                
-                token=c_lexer.token()
-                # If token is also a terminal we don't throw the difference as an error, just continue with the procedure                               
-                if token.type in tokens and len(not_found_terminals) <= 2:
-                    not_found_terminals.append(token.type)
-                elif in_error == False:                    
-                    in_error = True
-                    if stack_element is not t.EOF.value:
-                        message = f"Error: token {stack_element} in line {token.lineno} at POSITION {token.lexpos} was expected."
-                        errors.append(message)
-                continue
-            # If the element from the stack is a non-terminal token then we use grammar rules
-            if stack_element not in tokens:
-                # Special cases to pop a token from lexer
-                if should_ignore_token(stack_element, token.type):
-                    node = SyntaxTreeNode(get_node_type(token.type), token.value)
-                    tree_stack.append(node)
-                    token=c_lexer.token()
-                
-                
-                grammar_production=get_derivation(stack_element, token.type)                            
-                if  grammar_production is None:
-                    message = f"Error: token {token.type} in line {token.lineno} at POSITION {token.lexpos} was NOT expected." 
-                    errors.append(message)
-                    print(f"Grammar rule is not defined for this action. Aborting...")
-                    return 0
-                else:
-                    if could_generate_tree_node(stack_element, token.type) and False:                    
-                        node = SyntaxTreeNode(get_node_type(token.type), token.value)
-                        modified = grammar_production
-                        for c in  modified:
-                            if len(tree_stack) > 0:
-                                child = tree_stack.pop()
-                                node.add_child(child)
-                        tree_stack.append(node)
-                                         
-                    stack.pop()
-                    append_stack(grammar_production)
-                    stack_element=stack[-1]
-                    not_found_terminals = []
-                    in_error = False
         print("Stack: ", stack)
         print()
         print("------------------------------------------")
@@ -218,56 +257,90 @@ def append_stack(production):
     for element in reversed(production):
         stack.append(element)
 
-# Ejecucion del Parser 
-tlpParser()
+def check_type_compatibility(expected_type, value):
+    """
+    Función para verificar la compatibilidad de tipos entre la variable declarada
+    y el valor asignado, diferenciando entre enteros y flotantes.
+    """
+    if expected_type == 'int':
+        try:
+            # Intentamos convertir el valor a float primero para verificar si es un número
+            float_value = float(value)
+            # Si el valor convertido es un entero, lo devolvemos como int
+            if float_value.is_integer():
+                return True
+            else:
+                # Si tiene decimales, no es un entero
+                return False
+        except ValueError:
+            return False  # Si no se puede convertir a número, es un error de tipo
+    
+    elif expected_type == t.FLOAT.value:
+        try:
+            # Verificar si el valor es un flotante válido
+            float_value = float(value)
+            return True  # Siempre es válido como float (incluso si es un número entero como 2.0)
+        except ValueError:
+            return False  # Si no se puede convertir a float, es un error de tipo
+    
+    elif expected_type == t.CHAR.value:
+        # Verificar que el valor sea un solo carácter y es de tipo string
+        if isinstance(value, str) and len(value) == 1:
+            return True
+        else:
+            return False
+    
+    elif expected_type == t.STRING.value:
+        # Los strings siempre son compatibles con el tipo string
+        return isinstance(value, str)
 
-print()
-red = '\033[91m'
-white = '\033[97m' 
-for error in errors:
-    print(red + error)
-print(white)
-
-# Symbols table variables and functions
-symbol_table = {}
-current_value = None
-tokens_found = []
-scope_stack = [0]
+    return False  # Si no es uno de los tipos esperados, es incompatible
 
 def add_to_symbol_table(token, current_type, current_value=None):
+    """
+    Modificada para incluir la validación semántica de tipo de datos
+    al momento de hacer asignaciones.
+    """
     keys = list(symbol_table.keys())
     if token.type == t.IDENTIFIER.value:
         identifier = token.value
         if identifier not in symbol_table:
             symbol_table[identifier] = {
+                
                 'type': current_type,
                 'value': current_value,
                 'scope': scope_stack[-1]
             }
+        elif((identifier in symbol_table) and (current_type != None)):
+            errors.append(f"Error semántico: el identificador {identifier} ya ha sido declarado.")
     elif (len(keys) > 0) and (token.type == t.NUMBER.value or token.type == t.STRING.value or token.type == t.CHARACTER.value) and (not symbol_table[keys[-1]]['value']):
         last_identifier = list(symbol_table.keys())[-1]
         symbol_table[last_identifier]['value'] = token.value
+        if token.type == t.NUMBER.value:
+            # Si es un número, convertirlo a float o int según el tipo esperado
+            value_to_check = float(token.value)  # Se convierte a float, ya que los números pueden ser decimales
+        elif token.type == t.STRING.value:
+            value_to_check = token.value[1:-1]  # Eliminar las comillas de un string
+        elif token.type == t.CHARACTER.value:
+            value_to_check = token.value[1:-1]
+        # Validar tipo de asignación en la declaración
+        if  check_type_compatibility(current_type, value_to_check) == False:
+            
+            errors.append(f"Error semántico: tipo incompatible en la asignación de valor {token.value} a {current_type}.")
+    
     elif (len(keys) > 0) and token.type == t.STRING.value:
         last_identifier = keys[-1]
         if symbol_table[last_identifier]['value'] is None:
             symbol_table[last_identifier]['value'] = token.value[1:-1]
 
-def update_symbol(identifier, new_type=None, new_value=None):
-    if identifier in symbol_table:
-        if new_type is not None:
-            symbol_table[identifier]['type'] = new_type
-        if new_value is not None:
-            symbol_table[identifier]['value'] = new_value
+# Ejecucion del Parser 
+tlpParser()
 
-def delete_symbol(identifier):
-    if identifier in symbol_table:
-        del symbol_table[identifier]
-
-def search_symbol(identifier):
-    if identifier in symbol_table:
-        return symbol_table[identifier]
-    else:
-        return None
+# Tabla de símbolos
+symbol_table = {}
+current_value = None
+tokens_found = []
+scope_stack = [0]
     
 def build_symbol_table():
     read_file()
@@ -301,22 +374,18 @@ def print_symbol_table():
     print(tabulate(symbol_table_data, headers, tablefmt="fancy_grid"))
 
 build_symbol_table()
+
+
+print()
+red = '\033[91m'
+white = '\033[97m' 
+for error in errors:
+    print(red + error)
+print(white)
+
 print_symbol_table()
 print()
 
 print("Arbol de análisis sintáctico:")
 for node in tree_stack:
     print_tree(node)
-
-# Por si se necesita mostrar en la defensa
-# print('actualizar')
-# update_symbol('var', new_type='char', new_value='l')
-# print_symbol_table()
-
-# print('eliminar')
-# delete_symbol('b')
-# print_symbol_table()
-
-# print('buscar')
-# result = search_symbol('c')
-# print(result)

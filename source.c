@@ -1,5 +1,5 @@
 int main() {
-    int var = 2 ; 
+    int var = 547544.0 ; 
     if ( var ) {
     char b = 'a';
      } else { 
