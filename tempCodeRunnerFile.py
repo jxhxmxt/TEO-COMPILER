@@ -211,6 +211,7 @@ def append_stack(production):
 
 # Function to check semantic errors
 def check_type_compatibility(expected_type, value):
+    print(value)
     """
     Función para verificar la compatibilidad de tipos entre la variable declarada
     y el valor asignado, diferenciando entre enteros y flotantes.
@@ -249,26 +250,6 @@ def check_type_compatibility(expected_type, value):
 
     return False  # Si no es uno de los tipos esperados, es incompatible
 
-def check_division_by_zero(tokens):
-    """
-    Comprueba si hay una división por cero en la lista de tokens.
-    """
-    for i in range(len(tokens)):
-        token_type, token_value = tokens[i]
-        if token_type == t.DIV_OPERATOR.value:
-            # Verificar si el siguiente token es un cero
-            if i + 1 < len(tokens):
-                next_token_type, next_token_value = tokens[i + 1]
-                if next_token_type == t.NUMBER.value and float(next_token_value) == 0:
-                    errors.append(f"Error semántico: División por cero detectada en la posición {i + 1}.")
-                elif next_token_type == t.IDENTIFIER.value:
-                    # Verificar si la variable está en la tabla de símbolos y su valor es cero
-                    identifier = next_token_value
-                    if identifier in symbol_table and symbol_table[identifier]['value'] == '0':
-                        errors.append(f"Error semántico: División por cero usando la variable '{identifier}' en la posición {i + 1}.")
-                    elif identifier in symbol_table and symbol_table[identifier]['value'] is None:
-                        errors.append(f"Error semántico: Posible división por cero con la variable sin inicializar '{identifier}' en la posición {i + 1}.")
-
 # Add to symbol table with semantic checking
 def add_to_symbol_table(token, current_type, current_value=None):
     """
@@ -280,13 +261,11 @@ def add_to_symbol_table(token, current_type, current_value=None):
         identifier = token.value
         if identifier not in symbol_table:
             symbol_table[identifier] = {
-                
                 'type': current_type,
                 'value': current_value,
                 'scope': scope_stack[-1]
             }
-        elif((identifier in symbol_table) and (current_type != None)):
-            errors.append(f"Error semántico: el identificador {identifier} ya ha sido declarado.")
+     
     elif (len(keys) > 0) and (token.type == t.NUMBER.value or token.type == t.STRING.value or token.type == t.CHARACTER.value) and (not symbol_table[keys[-1]]['value']):
         last_identifier = list(symbol_table.keys())[-1]
         symbol_table[last_identifier]['value'] = token.value
@@ -297,9 +276,10 @@ def add_to_symbol_table(token, current_type, current_value=None):
             value_to_check = token.value[1:-1]  # Eliminar las comillas de un string
         elif token.type == t.CHARACTER.value:
             value_to_check = token.value[1:-1]
+        print(check_type_compatibility(current_type, token.value))
         # Validar tipo de asignación en la declaración
         if  check_type_compatibility(current_type, value_to_check) == False:
-            
+            print("entre")
             errors.append(f"Error semántico: tipo incompatible en la asignación de valor {token.value} a {current_type}.")
     
     elif (len(keys) > 0) and token.type == t.STRING.value:
@@ -339,9 +319,6 @@ def build_symbol_table():
             # Disminuir el ámbito al encontrar un cierre de bloque
             elif token.type == t.RIGHT_CURLY.value:
                 scope_stack.pop()
-
-    # After collecting tokens, check for division by zero
-    check_division_by_zero(tokens_found)
 
 # Mostrar la tabla de símbolos con tipo de dato, valor y ámbito
 
