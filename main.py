@@ -278,15 +278,20 @@ def add_to_symbol_table(token, current_type, current_value=None):
     keys = list(symbol_table.keys())
     if token.type == t.IDENTIFIER.value:
         identifier = token.value
-        if identifier not in symbol_table:
-            symbol_table[identifier] = {
-                
-                'type': current_type,
-                'value': current_value,
-                'scope': scope_stack[-1]
-            }
-        elif((identifier in symbol_table) and (current_type != None)):
-            errors.append(f"Error semántico: el identificador {identifier} ya ha sido declarado.")
+        if current_type is not None:
+            # Si no hay un tipo actual, verificar si el identificador ya ha sido declarado
+            if identifier not in symbol_table:
+                symbol_table[identifier] = {
+
+                    'type': current_type,
+                    'value': current_value,
+                    'scope': scope_stack[-1]
+                }
+            else:
+                errors.append(f"Error semántico: el identificador '{identifier}' ya ha sido declarado en este ámbito.")
+        else:
+            if identifier not in symbol_table:
+                errors.append(f"Error semántico: uso de variable no declarada '{identifier}' en línea {token.lineno}.")
     elif (len(keys) > 0) and (token.type == t.NUMBER.value or token.type == t.STRING.value or token.type == t.CHARACTER.value) and (not symbol_table[keys[-1]]['value']):
         last_identifier = list(symbol_table.keys())[-1]
         symbol_table[last_identifier]['value'] = token.value
